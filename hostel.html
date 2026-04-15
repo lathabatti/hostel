@@ -1,0 +1,1154 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HostelHub</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Fraunces:wght@600;700;800&amp;display=swap" rel="stylesheet">
+  <style>
+html, body { height: 100%; margin: 0; font-family: 'DM Sans', sans-serif; }
+.font-display { font-family: 'Fraunces', serif; }
+* { box-sizing: border-box; }
+.fade-in { animation: fadeIn 0.4s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.card-hover { transition: transform 0.25s, box-shadow 0.25s; }
+.card-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.12); }
+input:focus, select:focus, textarea:focus { outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.25); }
+.star-filled { color: #f59e0b; }
+.star-empty { color: #d1d5db; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+.toast-show { animation: toastIn 0.3s ease-out; }
+@keyframes toastIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+.badge-vacc { background: linear-gradient(135deg, #10b981, #059669); }
+.badge-not-vacc { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.hostel-img-placeholder { background: linear-gradient(135deg, #0f766e 0%, #134e4a 50%, #064e3b 100%); position: relative; overflow: hidden; }
+.hostel-img-placeholder::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(255,255,255,0.03) 20px, rgba(255,255,255,0.03) 40px); }
+.tab-active { border-bottom: 3px solid #10b981; color: #10b981; font-weight: 600; }
+ </style>
+  <script>
+tailwind.config = {
+ theme: {
+  extend: {
+   colors: {
+    brand: { 50:'#ecfdf5',100:'#d1fae5',200:'#a7f3d0',300:'#6ee7b7',400:'#34d399',500:'#10b981',600:'#059669',700:'#047857',800:'#065f46',900:'#064e3b' },
+    surface: { 50:'#f8fafc',100:'#f1f5f9',200:'#e2e8f0',300:'#cbd5e1' },
+    ink: { 900:'#0f172a',700:'#334155',500:'#64748b',300:'#94a3b8' }
+   }
+  }
+ }
+}
+ </script>
+  <style>body { box-sizing: border-box; }</style>
+ </head>
+ <body class="h-full">
+  <div id="app" class="h-full w-full overflow-auto" style="background: #f1f5f9;">
+   <div id="toast-container" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2" style="pointer-events:none;"></div><!-- SPLASH / ROLE SELECT -->
+   <div id="screen-welcome" class="h-full w-full flex flex-col items-center justify-center p-6 fade-in" style="background: linear-gradient(160deg, #064e3b 0%, #0f766e 40%, #10b981 100%);">
+    <div class="text-center">
+     <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
+      <i data-lucide="building-2" class="w-10 h-10 text-white"></i>
+     </div>
+     <h1 id="welcome-title" class="font-display text-4xl md:text-5xl font-800 text-white mb-3">HostelHub</h1>
+     <p id="welcome-tagline" class="text-brand-200 text-lg mb-10">Find your perfect stay</p>
+     <div class="flex flex-col sm:flex-row gap-4 justify-center"><button onclick="showSignup('customer')" class="px-8 py-4 bg-white text-brand-800 font-semibold rounded-2xl card-hover flex items-center gap-3 justify-center"><i data-lucide="user" class="w-5 h-5"></i> I'm a Customer</button> <button onclick="showSignup('supplier')" class="px-8 py-4 bg-white/15 backdrop-blur text-white font-semibold rounded-2xl border border-white/30 card-hover flex items-center gap-3 justify-center"><i data-lucide="home" class="w-5 h-5"></i> I'm a Hostel Owner</button>
+     </div><button onclick="showLogin()" class="mt-6 text-brand-200 underline text-sm hover:text-white transition">Already have an account? Log in</button>
+    </div>
+   </div><!-- SIGNUP -->
+   <div id="screen-signup" class="h-full w-full hidden overflow-auto" style="background: linear-gradient(160deg, #064e3b, #0f766e 60%, #10b981);">
+    <div class="max-w-md mx-auto p-6 pt-12 fade-in"><button onclick="showWelcome()" class="text-brand-200 flex items-center gap-1 mb-6 hover:text-white"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back</button>
+     <h2 class="font-display text-3xl text-white font-700 mb-2">Create Account</h2>
+     <p id="signup-role-label" class="text-brand-200 mb-8">Signing up as Customer</p>
+     <form id="signup-form" class="space-y-4" onsubmit="handleSignup(event)">
+      <div>
+       <label for="signup-name" class="text-white text-sm font-medium mb-1 block">Full Name</label> <input id="signup-name" type="text" required class="w-full px-4 py-3 rounded-xl bg-white/15 text-white placeholder-brand-300 border border-white/20 focus:border-brand-300" placeholder="John Doe">
+      </div>
+      <div>
+       <label for="signup-email" class="text-white text-sm font-medium mb-1 block">Email</label> <input id="signup-email" type="email" required class="w-full px-4 py-3 rounded-xl bg-white/15 text-white placeholder-brand-300 border border-white/20 focus:border-brand-300" placeholder="john@example.com">
+      </div>
+      <div>
+       <label for="signup-mobile" class="text-white text-sm font-medium mb-1 block">Mobile Number (10 digits)</label> <input id="signup-mobile" type="tel" required pattern="[0-9]{10}" maxlength="10" class="w-full px-4 py-3 rounded-xl bg-white/15 text-white placeholder-brand-300 border border-white/20 focus:border-brand-300" placeholder="1234567890">
+       <p id="mobile-error" class="text-red-200 text-xs mt-1 hidden">Please enter a valid 10-digit mobile number</p>
+      </div>
+      <div>
+       <label for="signup-password" class="text-white text-sm font-medium mb-1 block">Password</label> <input id="signup-password" type="password" required minlength="6" class="w-full px-4 py-3 rounded-xl bg-white/15 text-white placeholder-brand-300 border border-white/20 focus:border-brand-300" placeholder="At least 6 characters">
+      </div><button type="submit" id="signup-btn" class="w-full py-3.5 bg-white text-brand-800 font-semibold rounded-xl hover:bg-brand-50 transition mt-4">Create Account</button>
+     </form>
+    </div>
+   </div><!-- LOGIN -->
+   <div id="screen-login" class="h-full w-full hidden overflow-auto" style="background: linear-gradient(160deg, #064e3b, #0f766e 60%, #10b981);">
+    <div class="max-w-md mx-auto p-6 pt-12 fade-in"><button onclick="showWelcome()" class="text-brand-200 flex items-center gap-1 mb-6 hover:text-white"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back</button>
+     <h2 class="font-display text-3xl text-white font-700 mb-2">Welcome Back</h2>
+     <p class="text-brand-200 mb-8">Log in with your email</p>
+     <form onsubmit="handleLogin(event)" class="space-y-4">
+      <div>
+       <label for="login-email" class="text-white text-sm font-medium mb-1 block">Email</label> <input id="login-email" type="email" required class="w-full px-4 py-3 rounded-xl bg-white/15 text-white placeholder-brand-300 border border-white/20" placeholder="john@example.com">
+      </div>
+      <div>
+       <label for="login-password" class="text-white text-sm font-medium mb-1 block">Password</label> <input id="login-password" type="password" required class="w-full px-4 py-3 rounded-xl bg-white/15 text-white placeholder-brand-300 border border-white/20" placeholder="Enter your password">
+      </div><button type="submit" id="login-btn" class="w-full py-3.5 bg-white text-brand-800 font-semibold rounded-xl hover:bg-brand-50 transition mt-4">Log In</button>
+     </form>
+    </div>
+   </div><!-- CUSTOMER DASHBOARD -->
+   <div id="screen-customer" class="h-full w-full hidden overflow-auto bg-surface-50">
+    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-surface-200">
+     <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <h1 id="cust-app-title" class="font-display text-xl font-700 text-brand-800">HostelHub</h1>
+      <div class="flex items-center gap-3">
+       <span id="cust-user-name" class="text-sm text-ink-500 hidden sm:inline"></span> <button onclick="logout()" class="p-2 rounded-lg hover:bg-red-50"><i data-lucide="log-out" class="w-5 h-5 text-red-400"></i></button>
+      </div>
+     </div>
+    </header>
+    <div class="max-w-5xl mx-auto px-4 border-b border-surface-200 bg-white flex gap-6 text-sm overflow-x-auto"><button onclick="showCustomerTab('browse')" id="ctab-browse" class="py-3 px-1 tab-active whitespace-nowrap">Browse Hostels</button> <button onclick="showCustomerTab('bookings')" id="ctab-bookings" class="py-3 px-1 text-ink-500 whitespace-nowrap">My Bookings</button> <button onclick="showCustomerTab('reviews')" id="ctab-reviews" class="py-3 px-1 text-ink-500 whitespace-nowrap">Reviews</button>
+    </div>
+    <div id="cust-browse" class="max-w-5xl mx-auto p-4 fade-in">
+     <div class="flex flex-col sm:flex-row gap-3 mb-6">
+      <div class="flex-1 relative">
+       <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-300"></i> <input id="hostel-search" oninput="filterHostels()" type="text" placeholder="Search hostels..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-surface-200 bg-white text-sm">
+      </div><select id="hostel-filter-vacc" onchange="filterHostels()" class="px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-sm text-ink-700"><option value="all">All Hostels</option> <option value="vaccinated">Vaccinated Only</option> <option value="not">Not Vaccinated</option></select>
+     </div>
+     <div id="hostel-list" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
+     <div id="no-hostels" class="hidden text-center py-16 text-ink-300">
+      <i data-lucide="building-2" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>
+      <p class="text-lg font-medium">No hostels available yet</p>
+      <p class="text-sm">Check back later for new listings</p>
+     </div>
+    </div>
+    <div id="cust-detail" class="max-w-3xl mx-auto p-4 hidden fade-in"></div>
+    <div id="cust-bookings" class="max-w-3xl mx-auto p-4 hidden fade-in">
+     <h2 class="font-display text-2xl font-700 text-ink-900 mb-4">My Bookings</h2>
+     <div id="my-bookings-list"></div>
+     <div id="no-bookings" class="hidden text-center py-16 text-ink-300">
+      <i data-lucide="calendar" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>
+      <p class="text-lg font-medium">No bookings yet</p>
+      <p class="text-sm">Browse hostels and book your first bed!</p>
+     </div>
+    </div>
+    <div id="cust-reviews" class="max-w-3xl mx-auto p-4 hidden fade-in">
+     <h2 id="cust-reviews-title" class="font-display text-2xl font-700 text-ink-900 mb-6">Guest Reviews</h2>
+     <div id="reviews-list"></div>
+     <div id="no-reviews" class="hidden text-center py-16 text-ink-300">
+      <i data-lucide="message-circle" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>
+      <p class="text-lg font-medium">No reviews yet</p>
+      <p class="text-sm">After your stay, share your experience!</p>
+     </div>
+    </div>
+   </div><!-- SUPPLIER DASHBOARD -->
+   <div id="screen-supplier" class="h-full w-full hidden overflow-auto bg-surface-50">
+    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-surface-200">
+     <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <h1 id="sup-app-title" class="font-display text-xl font-700 text-brand-800">HostelHub</h1>
+      <div class="flex items-center gap-3">
+       <span id="sup-user-name" class="text-sm text-ink-500 hidden sm:inline"></span> <button onclick="logout()" class="p-2 rounded-lg hover:bg-red-50"><i data-lucide="log-out" class="w-5 h-5 text-red-400"></i></button>
+      </div>
+     </div>
+    </header>
+    <div class="max-w-5xl mx-auto px-4 border-b border-surface-200 bg-white flex gap-6 text-sm overflow-x-auto">
+     <button onclick="showSupplierTab('hostels')" id="stab-hostels" class="py-3 px-1 tab-active whitespace-nowrap">My Hostels</button> <button onclick="showSupplierTab('rooms')" id="stab-rooms" class="py-3 px-1 text-ink-500 whitespace-nowrap">Manage Rooms</button> <button onclick="showSupplierTab('requests')" id="stab-requests" class="py-3 px-1 text-ink-500 whitespace-nowrap">Booking Requests</button> <button onclick="showSupplierTab('add')" id="stab-add" class="py-3 px-1 text-ink-500 whitespace-nowrap">Add Hostel</button>
+    </div><!-- My Hostels -->
+    <div id="sup-hostels" class="max-w-5xl mx-auto p-4 fade-in">
+     <div id="my-hostels-list" class="grid gap-4 sm:grid-cols-2"></div>
+     <div id="no-my-hostels" class="hidden text-center py-16 text-ink-300">
+      <i data-lucide="building-2" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>
+      <p class="text-lg font-medium">No hostels listed</p>
+      <p class="text-sm">Add your first hostel to start receiving bookings</p>
+     </div>
+    </div><!-- Manage Rooms -->
+    <div id="sup-rooms" class="max-w-5xl mx-auto p-4 hidden fade-in">
+     <h2 class="font-display text-2xl font-700 text-ink-900 mb-6">Manage Hostel Rooms</h2>
+     <div id="rooms-hostel-selector" class="mb-6"><label class="text-sm font-medium text-ink-700 block mb-2">Select Hostel</label> <select id="rooms-hostel-select" onchange="loadRoomsForHostel()" class="w-full max-w-md px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-sm"> <option value="">Choose a hostel...</option> </select>
+     </div>
+     <div id="rooms-list-container" class="hidden">
+      <div id="rooms-list" class="space-y-3 mb-6"></div><button onclick="openAddRoomModal()" class="px-6 py-3 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 flex items-center gap-2"><i data-lucide="plus" class="w-5 h-5"></i> Add Room</button>
+     </div>
+     <div id="no-hostel-selected" class="text-center py-16 text-ink-300">
+      <i data-lucide="door-open" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>
+      <p class="text-lg font-medium">Select a hostel to manage rooms</p>
+     </div>
+    </div><!-- Booking Requests -->
+    <div id="sup-requests" class="max-w-3xl mx-auto p-4 hidden fade-in">
+     <h2 class="font-display text-2xl font-700 text-ink-900 mb-4">Booking Requests</h2>
+     <div id="booking-requests-list"></div>
+     <div id="no-requests" class="hidden text-center py-16 text-ink-300">
+      <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>
+      <p class="text-lg font-medium">No booking requests</p>
+     </div>
+    </div><!-- Analytics -->
+    <div id="sup-analytics" class="max-w-5xl mx-auto p-4 hidden fade-in">
+     <h2 class="font-display text-2xl font-700 text-ink-900 mb-6">Analytics &amp; Insights</h2>
+     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-xl border border-surface-200 p-4">
+       <p class="text-ink-400 text-xs font-medium mb-1">Total Users</p>
+       <p id="analytics-total-users" class="font-display text-3xl font-700 text-brand-600">0</p>
+       <p class="text-xs text-ink-300 mt-2">(All-time registrations)</p>
+      </div>
+      <div class="bg-white rounded-xl border border-surface-200 p-4">
+       <p class="text-ink-400 text-xs font-medium mb-1">Active Sessions</p>
+       <p id="analytics-active-sessions" class="font-display text-3xl font-700 text-green-600">0</p>
+       <p class="text-xs text-ink-300 mt-2">(Users logged in today)</p>
+      </div>
+      <div class="bg-white rounded-xl border border-surface-200 p-4">
+       <p class="text-ink-400 text-xs font-medium mb-1">Total Bookings</p>
+       <p id="analytics-total-bookings" class="font-display text-3xl font-700 text-blue-600">0</p>
+       <p class="text-xs text-ink-300 mt-2">(Confirmed &amp; Pending)</p>
+      </div>
+      <div class="bg-white rounded-xl border border-surface-200 p-4">
+       <p class="text-ink-400 text-xs font-medium mb-1">Avg. Rating</p>
+       <p id="analytics-avg-rating" class="font-display text-3xl font-700 text-yellow-600">0</p>
+       <p class="text-xs text-ink-300 mt-2">(From reviews)</p>
+      </div>
+     </div>
+     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 bg-white rounded-2xl border border-surface-200 p-6">
+       <h3 class="font-semibold text-ink-900 mb-4">User Directory</h3>
+       <div id="user-directory-list" class="space-y-2 max-h-96 overflow-auto"></div>
+      </div>
+      <div class="bg-white rounded-2xl border border-surface-200 p-6">
+       <h3 class="font-semibold text-ink-900 mb-4">Login Tracker</h3>
+       <div id="login-stats" class="space-y-2 text-sm"></div>
+      </div>
+     </div>
+    </div><!-- Add/Edit Hostel -->
+    <div id="sup-add" class="max-w-2xl mx-auto p-4 hidden fade-in">
+     <h2 id="hostel-form-title" class="font-display text-2xl font-700 text-ink-900 mb-4">Add New Hostel</h2>
+     <form id="hostel-form" onsubmit="handleHostelSubmit(event)" class="bg-white rounded-2xl p-6 border border-surface-200 space-y-4"><input type="hidden" id="hf-edit-id" value="">
+      <div>
+       <label for="hf-name" class="text-sm font-medium text-ink-700 block mb-1">Hostel Name</label> <input id="hf-name" required class="w-full px-4 py-2.5 rounded-xl border border-surface-200 text-sm" placeholder="Sunrise Hostel">
+      </div>
+      <div>
+       <label for="hf-address" class="text-sm font-medium text-ink-700 block mb-1">Address</label> <input id="hf-address" required class="w-full px-4 py-2.5 rounded-xl border border-surface-200 text-sm" placeholder="123 Main St, City">
+      </div>
+      <div>
+       <label for="hf-desc" class="text-sm font-medium text-ink-700 block mb-1">Description</label> <textarea id="hf-desc" rows="3" class="w-full px-4 py-2.5 rounded-xl border border-surface-200 text-sm" placeholder="Describe your hostel..."></textarea>
+      </div>
+      <div>
+       <label for="hf-surroundings" class="text-sm font-medium text-ink-700 block mb-1">Surroundings &amp; Nearby Attractions</label> <textarea id="hf-surroundings" rows="3" class="w-full px-4 py-2.5 rounded-xl border border-surface-200 text-sm" placeholder="e.g., Near metro station, close to restaurants, shopping mall..."></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+       <div>
+        <label for="hf-food" class="text-sm font-medium text-ink-700 block mb-1">Food Rating (1-5)</label> <input id="hf-food" type="number" min="1" max="5" required class="w-full px-4 py-2.5 rounded-xl border border-surface-200 text-sm" placeholder="4">
+       </div>
+       <div>
+        <label for="hf-clean" class="text-sm font-medium text-ink-700 block mb-1">Cleaning Rating (1-5)</label> <input id="hf-clean" type="number" min="1" max="5" required class="w-full px-4 py-2.5 rounded-xl border border-surface-200 text-sm" placeholder="4">
+       </div>
+      </div>
+      <div>
+       <label for="hf-vaccinated" class="text-sm font-medium text-ink-700 block mb-1">Vaccination Status</label> <select id="hf-vaccinated" class="w-full px-4 py-2.5 rounded-xl border border-surface-200 text-sm"><option value="true">Vaccinated ✓</option> <option value="false">Not Vaccinated</option></select>
+      </div>
+      <div>
+       <label for="hf-image" class="text-sm font-medium text-ink-700 block mb-1">Hostel Image</label>
+       <div class="relative"><input type="file" id="hf-image-file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" onchange="previewImage(event)">
+        <div id="hf-image-preview" class="w-full px-4 py-8 rounded-xl border-2 border-dashed border-surface-200 text-center bg-surface-50 cursor-pointer hover:border-brand-400 hover:bg-brand-50 transition">
+         <i data-lucide="image" class="w-8 h-8 text-ink-300 mx-auto mb-2"></i>
+         <p class="text-sm text-ink-500 font-medium">Click to upload hostel image</p>
+         <p class="text-xs text-ink-300">JPG, PNG supported</p>
+        </div>
+       </div><input type="hidden" id="hf-image" value="">
+      </div>
+      <div>
+       <label class="text-sm font-medium text-ink-700 block mb-3">Room Types &amp; Pricing</label>
+       <div id="room-types-list" class="space-y-3 mb-4"></div>
+       <div class="flex gap-2 flex-wrap"><button type="button" onclick="toggleRoomType(1)" class="px-4 py-2 rounded-xl border-2 border-surface-200 text-sm font-medium text-ink-600 hover:border-brand-400 transition" id="rt-btn-1">1 Sharing</button> <button type="button" onclick="toggleRoomType(2)" class="px-4 py-2 rounded-xl border-2 border-surface-200 text-sm font-medium text-ink-600 hover:border-brand-400 transition" id="rt-btn-2">2 Sharing</button> <button type="button" onclick="toggleRoomType(3)" class="px-4 py-2 rounded-xl border-2 border-surface-200 text-sm font-medium text-ink-600 hover:border-brand-400 transition" id="rt-btn-3">3 Sharing</button> <button type="button" onclick="toggleRoomType(4)" class="px-4 py-2 rounded-xl border-2 border-surface-200 text-sm font-medium text-ink-600 hover:border-brand-400 transition" id="rt-btn-4">4 Sharing</button> <button type="button" onclick="toggleRoomType(5)" class="px-4 py-2 rounded-xl border-2 border-surface-200 text-sm font-medium text-ink-600 hover:border-brand-400 transition" id="rt-btn-5">5 Sharing</button> <button type="button" onclick="toggleRoomType(6)" class="px-4 py-2 rounded-xl border-2 border-surface-200 text-sm font-medium text-ink-600 hover:border-brand-400 transition" id="rt-btn-6">6 Sharing</button>
+       </div>
+      </div><button type="submit" id="hostel-submit-btn" class="w-full py-3 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 transition">Add Hostel</button>
+     </form>
+    </div>
+   </div><!-- CONFIRM MODAL -->
+   <div id="confirm-modal" class="fixed inset-0 z-[999] hidden items-center justify-center p-4" style="background:rgba(0,0,0,0.5);">
+    <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+     <p id="confirm-msg" class="text-ink-900 font-medium mb-4"></p>
+     <div class="flex gap-3">
+      <button id="confirm-cancel" class="flex-1 py-2.5 rounded-xl border border-surface-200 text-ink-500 font-medium hover:bg-surface-50">Cancel</button> <button id="confirm-ok" class="flex-1 py-2.5 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700">Confirm</button>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+let allData = [];
+let currentUser = null;
+let signupRole = 'customer';
+let selectedRoomTypes = new Set();
+let editingHostel = null;
+let currentRoomHostelId = null;
+
+const defaultConfig = {
+ app_title: 'HostelHub',
+ app_tagline: 'Find your perfect stay',
+ background_color: '#f1f5f9',
+ surface_color: '#ffffff',
+ text_color: '#0f172a',
+ primary_color: '#10b981',
+ secondary_color: '#64748b',
+ font_family: 'DM Sans',
+ font_size: 14
+};
+
+window.elementSdk.init({
+ defaultConfig,
+ onConfigChange: async (config) => {
+  const bg = config.background_color || defaultConfig.background_color;
+  const sf = config.surface_color || defaultConfig.surface_color;
+  const title = config.app_title || defaultConfig.app_title;
+  const tagline = config.app_tagline || defaultConfig.app_tagline;
+
+  document.getElementById('app').style.background = bg;
+  document.querySelectorAll('.bg-white, .bg-white\\/80').forEach(el => el.style.backgroundColor = sf);
+  
+  const wt = document.getElementById('welcome-title');
+  if (wt) wt.textContent = title;
+  const wg = document.getElementById('welcome-tagline');
+  if (wg) wg.textContent = tagline;
+  const ct = document.getElementById('cust-app-title');
+  if (ct) ct.textContent = title;
+  const st = document.getElementById('sup-app-title');
+  if (st) st.textContent = title;
+ },
+ mapToCapabilities: (config) => ({
+  recolorables: [
+   { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+   { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+   { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+   { get: () => config.primary_color || defaultConfig.primary_color, set: (v) => { config.primary_color = v; window.elementSdk.setConfig({ primary_color: v }); } },
+   { get: () => config.secondary_color || defaultConfig.secondary_color, set: (v) => { config.secondary_color = v; window.elementSdk.setConfig({ secondary_color: v }); } }
+  ],
+  borderables: [],
+  fontEditable: { get: () => config.font_family || defaultConfig.font_family, set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); } },
+  fontSizeable: { get: () => config.font_size || defaultConfig.font_size, set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); } }
+ }),
+ mapToEditPanelValues: (config) => new Map([
+  ['app_title', config.app_title || defaultConfig.app_title],
+  ['app_tagline', config.app_tagline || defaultConfig.app_tagline]
+ ])
+});
+
+const dataHandler = {
+ onDataChanged(data) {
+  allData = data;
+  if (currentUser) {
+   const found = allData.find(d => d.type === 'user' && d.user_email === currentUser.user_email);
+   if (found) currentUser = found;
+  }
+  renderCurrentView();
+ }
+};
+
+(async () => {
+ const r = await window.dataSdk.init(dataHandler);
+ if (!r.isOk) console.error('Data SDK init failed');
+})();
+
+// HELPERS
+function toast(msg, type = 'success') {
+ const c = document.getElementById('toast-container');
+ const t = document.createElement('div');
+ t.className = `toast-show px-4 py-3 rounded-xl shadow-lg text-sm font-medium ${type === 'success' ? 'bg-brand-600 text-white' : type === 'error' ? 'bg-red-500 text-white' : 'bg-ink-900 text-white'}`;
+ t.style.pointerEvents = 'auto';
+ t.textContent = msg;
+ c.appendChild(t);
+ setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+function showConfirm(msg) {
+ return new Promise(resolve => {
+  const m = document.getElementById('confirm-modal');
+  document.getElementById('confirm-msg').textContent = msg;
+  m.classList.remove('hidden');
+  m.classList.add('flex');
+  document.getElementById('confirm-ok').onclick = () => { m.classList.add('hidden'); m.classList.remove('flex'); resolve(true); };
+  document.getElementById('confirm-cancel').onclick = () => { m.classList.add('hidden'); m.classList.remove('flex'); resolve(false); };
+ });
+}
+
+function stars(n, max = 5) {
+ let s = '';
+ for (let i = 1; i <= max; i++) s += `<span class="${i <= n ? 'star-filled' : 'star-empty'}">★</span>`;
+ return s;
+}
+
+function getHostels() { return allData.filter(d => d.type === 'hostel'); }
+function getBookings() { return allData.filter(d => d.type === 'booking'); }
+function getRooms() { return allData.filter(d => d.type === 'room'); }
+function getUsers() { return allData.filter(d => d.type === 'user'); }
+
+// NAVIGATION
+function hideAll() {
+ ['screen-welcome','screen-signup','screen-login','screen-customer','screen-supplier'].forEach(id => {
+  document.getElementById(id).classList.add('hidden');
+ });
+}
+
+function showWelcome() { hideAll(); document.getElementById('screen-welcome').classList.remove('hidden'); lucide.createIcons(); }
+function showSignup(role) {
+ signupRole = role;
+ hideAll();
+ document.getElementById('screen-signup').classList.remove('hidden');
+ document.getElementById('signup-role-label').textContent = `Signing up as ${role === 'customer' ? 'Customer' : 'Hostel Owner'}`;
+ document.getElementById('signup-name').value = '';
+ document.getElementById('signup-email').value = '';
+ lucide.createIcons();
+}
+function showLogin() {
+ hideAll();
+ document.getElementById('screen-login').classList.remove('hidden');
+ document.getElementById('login-email').value = '';
+ lucide.createIcons();
+}
+
+function showDashboard() {
+ hideAll();
+ if (currentUser.user_role === 'customer') {
+  document.getElementById('screen-customer').classList.remove('hidden');
+  document.getElementById('cust-user-name').textContent = currentUser.user_name;
+  showCustomerTab('browse');
+ } else {
+  document.getElementById('screen-supplier').classList.remove('hidden');
+  document.getElementById('sup-user-name').textContent = currentUser.user_name;
+  showSupplierTab('hostels');
+ }
+ lucide.createIcons();
+}
+
+function logout() {
+ if (currentUser) {
+  const sessions = allData.filter(d => d.type === 'session' && d.session_user_id === currentUser.__backendId);
+  sessions.forEach(session => window.dataSdk.delete(session));
+  localStorage.removeItem('hostelhub_session_id');
+ }
+ currentUser = null;
+ showWelcome();
+}
+
+// CUSTOMER TABS
+function showCustomerTab(tab) {
+ ['browse','bookings','reviews'].forEach(t => {
+  const el = document.getElementById('cust-' + t);
+  const btn = document.getElementById('ctab-' + t);
+  if (t === tab) { el.classList.remove('hidden'); btn.className = 'py-3 px-1 tab-active'; }
+  else { el.classList.add('hidden'); btn.className = 'py-3 px-1 text-ink-500'; }
+ });
+ if (tab === 'browse') renderHostelList();
+ if (tab === 'bookings') renderMyBookings();
+ if (tab === 'reviews') renderReviews();
+ lucide.createIcons();
+}
+
+// SUPPLIER TABS
+function showSupplierTab(tab) {
+ ['hostels','rooms','requests','add'].forEach(t => {
+  const el = document.getElementById('sup-' + t);
+  const btn = document.getElementById('stab-' + t);
+  if (t === tab) { el.classList.remove('hidden'); btn.className = 'py-3 px-1 tab-active'; }
+  else { el.classList.add('hidden'); btn.className = 'py-3 px-1 text-ink-500'; }
+ });
+ if (tab === 'hostels') renderMyHostels();
+ if (tab === 'rooms') loadRoomSelectOptions();
+ if (tab === 'requests') renderBookingRequests();
+ if (tab === 'add') resetHostelForm();
+ lucide.createIcons();
+}
+
+function renderCurrentView() {
+ if (!currentUser) return;
+ if (currentUser.user_role === 'customer') {
+  if (!document.getElementById('cust-browse').classList.contains('hidden')) renderHostelList();
+  if (!document.getElementById('cust-bookings').classList.contains('hidden')) renderMyBookings();
+ } else {
+  if (!document.getElementById('sup-hostels').classList.contains('hidden')) renderMyHostels();
+  if (!document.getElementById('sup-rooms').classList.contains('hidden')) loadRoomSelectOptions();
+ }
+}
+
+// AUTH
+async function handleSignup(e) {
+ e.preventDefault();
+ const name = document.getElementById('signup-name').value.trim();
+ const email = document.getElementById('signup-email').value.trim().toLowerCase();
+ const mobile = document.getElementById('signup-mobile').value.trim();
+ const password = document.getElementById('signup-password').value.trim();
+ 
+ if (!name || !email || !mobile || !password) return;
+
+ if (!/^\d{10}$/.test(mobile)) {
+  document.getElementById('mobile-error').classList.remove('hidden');
+  return;
+ }
+ document.getElementById('mobile-error').classList.add('hidden');
+
+ if (allData.find(d => d.type === 'user' && d.user_email === email)) {
+  toast('Email already registered. Please log in.', 'error'); return;
+ }
+
+ const btn = document.getElementById('signup-btn');
+ btn.disabled = true; btn.textContent = 'Creating...';
+
+ if (allData.filter(d => d.type === 'user').length >= 999) {
+  toast('Maximum accounts reached.', 'error'); btn.disabled = false; btn.textContent = 'Create Account'; return;
+ }
+
+ const r = await window.dataSdk.create({ type: 'user', user_name: name, user_email: email, user_mobile: mobile, user_password: password, user_role: signupRole, created_at: new Date().toISOString() });
+ btn.disabled = false; btn.textContent = 'Create Account';
+ if (r.isOk) {
+  setTimeout(() => {
+   currentUser = allData.find(d => d.type === 'user' && d.user_email === email);
+   if (currentUser) { toast('Account created!'); showDashboard(); }
+  }, 500);
+ } else { toast('Failed to create account.', 'error'); }
+}
+
+async function handleLogin(e) {
+ e.preventDefault();
+ const email = document.getElementById('login-email').value.trim().toLowerCase();
+ const password = document.getElementById('login-password').value.trim();
+ 
+ if (!email || !password) return;
+ 
+ const user = allData.find(d => d.type === 'user' && d.user_email === email);
+ if (!user) { toast('Account not found. Please sign up.', 'error'); return; }
+ if (user.user_password !== password) { toast('Incorrect password.', 'error'); return; }
+ 
+ currentUser = user;
+ 
+ const sessionResult = await window.dataSdk.create({
+  type: 'session',
+  session_user_id: user.__backendId,
+  session_user_name: user.user_name,
+  session_user_email: user.user_email,
+  session_login_time: new Date().toISOString(),
+  session_last_activity: new Date().toISOString(),
+  created_at: new Date().toISOString()
+ });
+ 
+ if (sessionResult.isOk) {
+  localStorage.setItem('hostelhub_session_id', sessionResult.data);
+ }
+ 
+ toast(`Welcome back, ${user.user_name}!`);
+ showDashboard();
+}
+
+// CUSTOMER: HOSTELS
+function renderHostelList() {
+ const hostels = getHostels();
+ const search = (document.getElementById('hostel-search').value || '').toLowerCase();
+ const vaccFilter = document.getElementById('hostel-filter-vacc').value;
+
+ let filtered = hostels.filter(h => {
+  if (search && !h.hostel_name.toLowerCase().includes(search) && !(h.hostel_address || '').toLowerCase().includes(search)) return false;
+  if (vaccFilter === 'vaccinated' && !h.hostel_vaccinated) return false;
+  if (vaccFilter === 'not' && h.hostel_vaccinated) return false;
+  return true;
+ });
+
+ const container = document.getElementById('hostel-list');
+ const noEl = document.getElementById('no-hostels');
+
+ if (filtered.length === 0) {
+  container.innerHTML = '';
+  noEl.classList.remove('hidden');
+  return;
+ }
+ noEl.classList.add('hidden');
+
+ container.innerHTML = filtered.map(h => {
+  const roomTypes = h.room_types ? JSON.parse(h.room_types) : [];
+  const avgPrice = roomTypes.length > 0 ? (roomTypes.reduce((sum, rt) => sum + rt.price, 0) / roomTypes.length).toFixed(0) : 0;
+  return `
+  <div class="bg-white rounded-2xl border border-surface-200 overflow-hidden card-hover cursor-pointer" onclick="viewHostelDetail('${h.__backendId}')">
+   <div class="hostel-img-placeholder h-36 flex items-center justify-center" ${h.hostel_image ? `style="background-image: url('${h.hostel_image}'); background-size: cover;"` : ''}>
+    ${!h.hostel_image ? `<i data-lucide="building-2" class="w-10 h-10 text-white/60"></i>` : ''}
+   </div>
+   <div class="p-4">
+    <div class="flex items-start justify-between mb-2">
+     <h3 class="font-semibold text-ink-900 text-base">${h.hostel_name}</h3>
+     <span class="text-xs px-2 py-0.5 rounded-full text-white font-medium ${h.hostel_vaccinated ? 'badge-vacc' : 'badge-not-vacc'}">${h.hostel_vaccinated ? '✓ Vaccinated' : '✗ Not Vacc.'}</span>
+    </div>
+    <p class="text-ink-500 text-xs mb-3 truncate">${h.hostel_address || ''}</p>
+    <div class="flex items-center gap-3 text-xs text-ink-500 mb-3">
+     <span>🍽 ${stars(h.hostel_food_rating||0)}</span>
+     <span>🧹 ${stars(h.hostel_clean_rating||0)}</span>
+    </div>
+    <div class="flex items-center justify-between">
+     <span class="font-display font-700 text-brand-700 text-lg">₹${avgPrice}<span class="text-xs font-normal text-ink-300">/mo</span></span>
+     <span class="text-xs text-brand-600 font-medium">${roomTypes.length} room types</span>
+    </div>
+   </div>
+  </div>`;
+ }).join('');
+ lucide.createIcons();
+}
+
+function filterHostels() { renderHostelList(); }
+
+function viewHostelDetail(hostelId) {
+ const h = allData.find(d => d.__backendId === hostelId && d.type === 'hostel');
+ if (!h) return;
+
+ const rooms = getRooms().filter(r => r.hostel_id === hostelId);
+ const roomTypes = h.room_types ? JSON.parse(h.room_types) : [];
+ 
+ document.getElementById('cust-browse').classList.add('hidden');
+ const det = document.getElementById('cust-detail');
+ det.classList.remove('hidden');
+
+ let floorHTML = '';
+ const floorMap = {};
+ rooms.forEach(r => {
+  const floor = r.floor_number || 1;
+  if (!floorMap[floor]) floorMap[floor] = [];
+  floorMap[floor].push(r);
+ });
+
+ for (const floor in floorMap) {
+  let roomsHTML = floorMap[floor].map(r => {
+   const type = roomTypes.find(rt => rt.sharing === r.room_sharing_type);
+   const available = (r.room_sharing_type || 1) - (r.room_occupied_beds || 0);
+   const bedIndicators = Array(r.room_sharing_type || 1).fill('').map((_, i) => 
+    i < available ? '<span class="inline-block w-4 h-4 rounded-full bg-green-400 border border-green-600"></span>' : '<span class="inline-block w-4 h-4 rounded-full bg-red-300 border border-red-400"></span>'
+   ).join('<span class="mx-0.5"></span>');
+   
+   return `
+   <div class="bg-surface-50 rounded-lg p-3 border border-surface-200">
+    <p class="font-semibold text-ink-900 text-sm mb-1">Room ${r.room_number}</p>
+    <p class="text-xs text-ink-600 mb-2">${r.room_sharing_type || 1}-sharing bed • ₹${r.room_price || 0}/mo</p>
+    <div class="flex items-center gap-1 mb-2">${bedIndicators}</div>
+    <p class="text-xs text-ink-500"><span class="font-semibold text-green-600">${available} empty</span> of ${r.room_sharing_type || 1} beds</p>
+   </div>`;
+  }).join('');
+
+  floorHTML += `
+  <div class="mb-4">
+   <p class="text-sm font-semibold text-ink-700 mb-2 flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4"></i> Floor ${floor}</p>
+   <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">${roomsHTML}</div>
+  </div>`;
+ }
+
+ det.innerHTML = `
+ <button onclick="showCustomerTab('browse')" class="text-brand-600 flex items-center gap-1 mb-4 hover:text-brand-800 text-sm font-medium"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Hostels</button>
+ <div class="bg-white rounded-2xl border border-surface-200 overflow-hidden">
+  <div class="hostel-img-placeholder h-48 flex items-center justify-center" ${h.hostel_image ? `style="background-image: url('${h.hostel_image}'); background-size: cover;"` : ''}>
+   ${!h.hostel_image ? `<i data-lucide="building-2" class="w-14 h-14 text-white/60"></i>` : ''}
+  </div>
+  <div class="p-6">
+   <div class="flex items-start justify-between mb-2">
+    <h2 class="font-display text-2xl font-700 text-ink-900">${h.hostel_name}</h2>
+    <span class="text-xs px-3 py-1 rounded-full text-white font-medium ${h.hostel_vaccinated ? 'badge-vacc' : 'badge-not-vacc'}">${h.hostel_vaccinated ? '✓ Vaccinated' : '✗ Not Vaccinated'}</span>
+   </div>
+   <p class="text-ink-500 text-sm mb-4">${h.hostel_address || ''}</p>
+   ${h.hostel_description ? `<p class="text-ink-700 text-sm mb-4">${h.hostel_description}</p>` : ''}
+   ${h.hostel_surroundings ? `<div class="bg-brand-50 rounded-xl border border-brand-200 p-4 mb-4"><p class="font-semibold text-ink-900 text-sm mb-2 flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4 text-brand-600"></i> Nearby Attractions</p><p class="text-sm text-ink-700">${h.hostel_surroundings}</p></div>` : ''}
+   
+   <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+    <div class="bg-surface-50 rounded-xl p-3 text-center">
+     <p class="text-lg">${stars(h.hostel_food_rating||0)}</p>
+     <p class="text-xs text-ink-400">Food Rating</p>
+    </div>
+    <div class="bg-surface-50 rounded-xl p-3 text-center">
+     <p class="text-lg">${stars(h.hostel_clean_rating||0)}</p>
+     <p class="text-xs text-ink-400">Cleaning Rating</p>
+    </div>
+    <div class="bg-surface-50 rounded-xl p-3 text-center">
+     <p class="font-display text-xl font-700 text-brand-600">${rooms.length}</p>
+     <p class="text-xs text-ink-400">Total Rooms</p>
+    </div>
+   </div>
+
+   <h3 class="font-semibold text-ink-900 mb-3">Available Rooms By Floor</h3>
+   ${floorHTML}
+  </div>
+ </div>`;
+ lucide.createIcons();
+}
+
+function renderMyBookings() {
+ if (!currentUser) return;
+ const bookings = getBookings().filter(b => b.booking_user_id === currentUser.__backendId);
+ const container = document.getElementById('my-bookings-list');
+ const noEl = document.getElementById('no-bookings');
+
+ if (bookings.length === 0) { container.innerHTML = ''; noEl.classList.remove('hidden'); return; }
+ noEl.classList.add('hidden');
+
+ container.innerHTML = bookings.map(b => {
+  const hostel = allData.find(d => d.__backendId === b.booking_hostel_id && d.type === 'hostel');
+  const room = allData.find(d => d.__backendId === b.booking_room_id && d.type === 'room');
+  const statusColors = { pending: 'bg-yellow-100 text-yellow-700', confirmed: 'bg-green-100 text-green-700', rejected: 'bg-red-100 text-red-700' };
+  const sc = statusColors[b.booking_status] || 'bg-gray-100 text-gray-700';
+  return `<div class="bg-white rounded-xl border border-surface-200 p-4 mb-3 flex items-center justify-between">
+   <div>
+    <p class="font-semibold text-ink-900">${hostel ? hostel.hostel_name : 'Unknown Hostel'}</p>
+    <p class="text-xs text-ink-500">${room ? `Room ${room.room_number} (${room.room_sharing_type}-sharing)` : 'Room info'}</p>
+    <p class="text-xs text-ink-300 mt-1">${new Date(b.booking_date).toLocaleDateString()}</p>
+   </div>
+   <span class="text-xs px-3 py-1 rounded-full font-medium ${sc}">${(b.booking_status||'pending').charAt(0).toUpperCase() + (b.booking_status||'pending').slice(1)}</span>
+  </div>`;
+ }).join('');
+}
+
+function renderReviews() {
+ const reviews = allData.filter(d => d.type === 'review');
+ const container = document.getElementById('reviews-list');
+ const noEl = document.getElementById('no-reviews');
+
+ if (reviews.length === 0) { 
+  container.innerHTML = '';
+  noEl.classList.remove('hidden');
+  return;
+ }
+
+ noEl.classList.add('hidden');
+
+ container.innerHTML = reviews.map(r => {
+  const hostel = allData.find(d => d.__backendId === r.review_hostel_id && d.type === 'hostel');
+  const rating = r.review_rating || 0;
+
+  return `
+  <div class="bg-white rounded-2xl border border-surface-200 p-5 mb-4">
+   <div class="flex items-start justify-between mb-3">
+    <div>
+     <p class="font-semibold text-ink-900">${r.review_user_name || 'Guest'}</p>
+     <p class="text-xs text-ink-400 mb-1">${hostel ? hostel.hostel_name : 'Unknown Hostel'}</p>
+     <p class="text-xs text-ink-300">${new Date(r.review_date).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'})}</p>
+    </div>
+    <div class="flex gap-1 text-xl">${stars(rating, 5)}</div>
+   </div>
+   <p class="text-sm text-ink-700 mb-3">${r.review_text || ''}</p>
+  </div>`;
+ }).join('');
+ lucide.createIcons();
+}
+
+// SUPPLIER: HOSTELS
+function renderMyHostels() {
+ if (!currentUser) return;
+ const hostels = getHostels().filter(h => h.hostel_owner_id === currentUser.__backendId);
+ const container = document.getElementById('my-hostels-list');
+ const noEl = document.getElementById('no-my-hostels');
+
+ if (hostels.length === 0) { container.innerHTML = ''; noEl.classList.remove('hidden'); return; }
+ noEl.classList.add('hidden');
+
+ container.innerHTML = hostels.map(h => {
+  const rooms = getRooms().filter(r => r.hostel_id === h.__backendId);
+  const totalOccupied = rooms.reduce((sum, r) => sum + (r.room_occupied_beds || 0), 0);
+  const totalBeds = rooms.reduce((sum, r) => sum + (r.room_sharing_type || 1), 0);
+  const pending = getBookings().filter(b => b.booking_hostel_id === h.__backendId && b.booking_status === 'pending').length;
+
+  return `<div class="bg-white rounded-2xl border border-surface-200 p-5 card-hover">
+   <div class="flex items-start justify-between mb-2">
+    <h3 class="font-semibold text-ink-900">${h.hostel_name}</h3>
+    <span class="text-xs px-2 py-0.5 rounded-full text-white font-medium ${h.hostel_vaccinated ? 'badge-vacc' : 'badge-not-vacc'}">${h.hostel_vaccinated ? 'Vacc.' : 'Not Vacc.'}</span>
+   </div>
+   <p class="text-xs text-ink-400 mb-3">${h.hostel_address||''}</p>
+   <div class="flex gap-3 text-xs text-ink-500 mb-3">
+    <span>${rooms.length} rooms</span>
+    <span>${totalBeds - totalOccupied}/${totalBeds} beds free</span>
+    ${pending > 0 ? `<span class="text-yellow-600 font-medium">${pending} pending</span>` : ''}
+   </div>
+   <div class="flex gap-2">
+    <button onclick="editHostel('${h.__backendId}')" class="flex-1 py-2 text-sm rounded-lg border border-surface-200 text-ink-500 hover:bg-surface-50 flex items-center justify-center gap-1"><i data-lucide="edit" class="w-3 h-3"></i> Edit</button>
+    <button onclick="deleteHostel('${h.__backendId}')" class="py-2 px-3 text-sm rounded-lg border border-red-200 text-red-400 hover:bg-red-50"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+   </div>
+  </div>`;
+ }).join('');
+ lucide.createIcons();
+}
+
+// SUPPLIER: MANAGE ROOMS
+function loadRoomSelectOptions() {
+ if (!currentUser) return;
+ const hostels = getHostels().filter(h => h.hostel_owner_id === currentUser.__backendId);
+ const select = document.getElementById('rooms-hostel-select');
+ select.innerHTML = '<option value="">Choose a hostel...</option>' + hostels.map(h => `<option value="${h.__backendId}">${h.hostel_name}</option>`).join('');
+}
+
+function loadRoomsForHostel() {
+ const hostelId = document.getElementById('rooms-hostel-select').value;
+ if (!hostelId) {
+  document.getElementById('rooms-list-container').classList.add('hidden');
+  document.getElementById('no-hostel-selected').classList.remove('hidden');
+  return;
+ }
+
+ currentRoomHostelId = hostelId;
+ document.getElementById('no-hostel-selected').classList.add('hidden');
+ document.getElementById('rooms-list-container').classList.remove('hidden');
+
+ const rooms = getRooms().filter(r => r.hostel_id === hostelId);
+ const container = document.getElementById('rooms-list');
+
+ if (rooms.length === 0) {
+  container.innerHTML = '<p class="text-center py-8 text-ink-300">No rooms added yet. Click "Add Room" to get started.</p>';
+  return;
+ }
+
+ // Group by floor
+ const floorMap = {};
+ rooms.forEach(r => {
+  const floor = r.floor_number || 1;
+  if (!floorMap[floor]) floorMap[floor] = [];
+  floorMap[floor].push(r);
+ });
+
+ let html = '';
+ for (const floor in floorMap) {
+  const floorRooms = floorMap[floor];
+  const roomsHTML = floorRooms.map(r => {
+   const totalBeds = r.room_sharing_type || 1;
+   const occupiedBeds = r.room_occupied_beds || 0;
+   const availableBeds = totalBeds - occupiedBeds;
+   
+   // Create visual bed indicators
+   let bedIndicators = '';
+   for (let i = 0; i < totalBeds; i++) {
+    const isOccupied = i < occupiedBeds;
+    bedIndicators += `<span class="inline-block w-5 h-5 rounded-full border-2 mx-0.5 ${isOccupied ? 'bg-red-400 border-red-600' : 'bg-green-400 border-green-600'} cursor-pointer" title="${isOccupied ? 'Occupied' : 'Empty'}" onclick="toggleBedStatus('${r.__backendId}', ${i})"></span>`;
+   }
+   
+   return `
+   <div class="bg-white rounded-lg p-4 border border-surface-200">
+    <div class="flex items-center justify-between mb-3">
+     <div>
+      <p class="font-semibold text-ink-900 text-sm">Room ${r.room_number}</p>
+      <p class="text-xs text-ink-600">${totalBeds}-sharing • ₹${r.room_price || 0}/mo</p>
+     </div>
+     <div class="flex gap-1">
+      <button onclick="editRoom('${r.__backendId}')" class="p-2 rounded-lg border border-surface-200 text-ink-500 hover:bg-surface-50"><i data-lucide="edit" class="w-3 h-3"></i></button>
+      <button onclick="deleteRoom('${r.__backendId}')" class="p-2 rounded-lg border border-red-200 text-red-400 hover:bg-red-50"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+     </div>
+    </div>
+    <div class="bg-surface-50 rounded-lg p-3 mb-3">
+     <p class="text-xs text-ink-500 font-medium mb-2">Bed Status (Click to toggle):</p>
+     <div class="flex items-center justify-center gap-1">${bedIndicators}</div>
+    </div>
+    <p class="text-xs text-ink-600 text-center"><span class="font-semibold text-green-600">${availableBeds} empty</span> • <span class="font-semibold text-red-600">${occupiedBeds} occupied</span></p>
+   </div>`;
+  }).join('');
+
+  html += `
+  <div class="bg-surface-50 rounded-xl p-4 border border-surface-200">
+   <p class="font-semibold text-ink-900 mb-4 flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4 text-brand-600"></i> Floor ${floor}</p>
+   <div class="space-y-3">${roomsHTML}</div>
+  </div>`;
+ }
+
+ container.innerHTML = html;
+ lucide.createIcons();
+}
+
+function openAddRoomModal() {
+ // Simple inline form for adding rooms
+ const form = prompt('Enter room details:\nFormat: RoomNumber,SharingType(1-6),Price\nExample: 101,3,7000');
+ if (!form) return;
+
+ const parts = form.split(',');
+ if (parts.length !== 3) {
+  toast('Invalid format. Use: RoomNumber,SharingType,Price', 'error');
+  return;
+ }
+
+ const roomNum = parts[0].trim();
+ const sharing = parseInt(parts[1].trim());
+ const price = parseInt(parts[2].trim());
+
+ if (!roomNum || !sharing || sharing < 1 || sharing > 6 || !price) {
+  toast('Please enter valid room details.', 'error');
+  return;
+ }
+
+ addRoom(roomNum, sharing, price);
+}
+
+async function addRoom(roomNumber, sharingType, price) {
+ if (!currentRoomHostelId) return;
+
+ const floor = Math.floor(Math.random() * 5) + 1; // Auto-assign floor for now
+ if (allData.length >= 999) { toast('Max records reached.', 'error'); return; }
+
+ const r = await window.dataSdk.create({
+  type: 'room',
+  hostel_id: currentRoomHostelId,
+  floor_number: floor,
+  room_number: roomNumber,
+  room_sharing_type: sharingType,
+  room_occupied_beds: 0,
+  room_price: price,
+  created_at: new Date().toISOString()
+ });
+
+ if (r.isOk) {
+  toast('Room added successfully!');
+  loadRoomsForHostel();
+ } else {
+  toast('Failed to add room.', 'error');
+ }
+}
+
+async function deleteRoom(roomId) {
+ const ok = await showConfirm('Delete this room?');
+ if (!ok) return;
+ const room = allData.find(d => d.__backendId === roomId);
+ if (!room) return;
+ const r = await window.dataSdk.delete(room);
+ if (r.isOk) { toast('Room deleted.'); loadRoomsForHostel(); } else toast('Failed to delete.', 'error');
+}
+
+function editRoom(roomId) {
+ const room = allData.find(d => d.__backendId === roomId);
+ if (!room) return;
+ const form = prompt(`Edit room:\nFormat: RoomNumber,SharingType(1-6),Price\nCurrent: ${room.room_number},${room.room_sharing_type},${room.room_price}`);
+ if (!form) return;
+ const parts = form.split(',');
+ if (parts.length !== 3) { toast('Invalid format.', 'error'); return; }
+ updateRoom(roomId, parts[0].trim(), parseInt(parts[1].trim()), parseInt(parts[2].trim()));
+}
+
+async function updateRoom(roomId, roomNumber, sharingType, price) {
+ const room = allData.find(d => d.__backendId === roomId);
+ if (!room) return;
+ const r = await window.dataSdk.update({ ...room, room_number: roomNumber, room_sharing_type: sharingType, room_price: price });
+ if (r.isOk) { toast('Room updated!'); loadRoomsForHostel(); } else toast('Failed to update.', 'error');
+}
+
+async function toggleBedStatus(roomId, bedIndex) {
+ const room = allData.find(d => d.__backendId === roomId);
+ if (!room) return;
+ 
+ const totalBeds = room.room_sharing_type || 1;
+ const occupiedBeds = room.room_occupied_beds || 0;
+ 
+ let newOccupiedBeds;
+ if (bedIndex < occupiedBeds) {
+  newOccupiedBeds = occupiedBeds - 1;
+ } else {
+  newOccupiedBeds = occupiedBeds + 1;
+ }
+ 
+ if (newOccupiedBeds < 0) newOccupiedBeds = 0;
+ if (newOccupiedBeds > totalBeds) newOccupiedBeds = totalBeds;
+ 
+ const r = await window.dataSdk.update({ ...room, room_occupied_beds: newOccupiedBeds });
+ if (r.isOk) {
+  loadRoomsForHostel();
+ } else {
+  toast('Failed to update bed status.', 'error');
+ }
+}
+
+// SUPPLIER: BOOKING REQUESTS
+function renderBookingRequests() {
+ if (!currentUser) return;
+ const myHostelIds = getHostels().filter(h => h.hostel_owner_id === currentUser.__backendId).map(h => h.__backendId);
+ const requests = getBookings().filter(b => myHostelIds.includes(b.booking_hostel_id));
+ const container = document.getElementById('booking-requests-list');
+ const noEl = document.getElementById('no-requests');
+
+ if (requests.length === 0) { container.innerHTML = ''; noEl.classList.remove('hidden'); return; }
+ noEl.classList.add('hidden');
+
+ requests.sort((a, b) => (a.booking_status === 'pending' ? -1 : 1) - (b.booking_status === 'pending' ? -1 : 1));
+
+ container.innerHTML = requests.map(b => {
+  const hostel = allData.find(d => d.__backendId === b.booking_hostel_id);
+  const room = allData.find(d => d.__backendId === b.booking_room_id);
+  const statusColors = { pending: 'bg-yellow-100 text-yellow-700', confirmed: 'bg-green-100 text-green-700', rejected: 'bg-red-100 text-red-700' };
+  const sc = statusColors[b.booking_status] || '';
+  const isPending = b.booking_status === 'pending';
+  return `<div class="bg-white rounded-xl border border-surface-200 p-4 mb-3 ${isPending ? 'border-l-4 border-l-yellow-400' : ''}">
+   <div class="flex items-start justify-between mb-2">
+    <div>
+     <p class="font-semibold text-ink-900">${b.booking_user_name || 'Customer'}</p>
+     <p class="text-xs text-ink-500">${hostel ? hostel.hostel_name : ''} ${room ? `- Room ${room.room_number}` : ''}</p>
+     <p class="text-xs text-ink-300 mt-1">${new Date(b.booking_date).toLocaleDateString()}</p>
+    </div>
+    <span class="text-xs px-3 py-1 rounded-full font-medium ${sc}">${(b.booking_status||'').charAt(0).toUpperCase() + (b.booking_status||'').slice(1)}</span>
+   </div>
+   ${isPending ? `<div class="flex gap-2 mt-3">
+    <button onclick="updateBooking('${b.__backendId}', 'confirmed')" class="flex-1 py-2 text-sm rounded-lg bg-brand-600 text-white hover:bg-brand-700 font-medium">Accept</button>
+    <button onclick="updateBooking('${b.__backendId}', 'rejected')" class="flex-1 py-2 text-sm rounded-lg border border-red-200 text-red-500 hover:bg-red-50 font-medium">Reject</button>
+   </div>` : ''}
+  </div>`;
+ }).join('');
+}
+
+async function updateBooking(bookingId, status) {
+ const booking = allData.find(d => d.__backendId === bookingId);
+ if (!booking) return;
+ const r = await window.dataSdk.update({ ...booking, booking_status: status });
+ if (r.isOk) toast(status === 'confirmed' ? 'Booking accepted!' : 'Booking rejected.');
+ else toast('Failed to update.', 'error');
+}
+
+
+
+// SUPPLIER: HOSTEL FORM
+function toggleRoomType(sharing) {
+ if (selectedRoomTypes.has(sharing)) {
+  selectedRoomTypes.delete(sharing);
+ } else {
+  selectedRoomTypes.add(sharing);
+ }
+ updateRoomTypesList();
+}
+
+function updateRoomTypesList() {
+ const list = document.getElementById('room-types-list');
+ const html = Array.from(selectedRoomTypes).sort().map(sharing => `
+  <div class="flex items-center gap-3 bg-surface-50 p-3 rounded-lg border border-surface-200">
+   <span class="text-sm font-semibold text-ink-900">${sharing}-Sharing</span>
+   <input type="number" min="0" placeholder="Price (₹)" class="flex-1 px-3 py-1 rounded border border-surface-200 text-sm" id="price-${sharing}">
+   <button type="button" onclick="selectedRoomTypes.delete(${sharing}); updateRoomTypesList()" class="text-red-500 hover:text-red-700"><i data-lucide="x" class="w-4 h-4"></i></button>
+  </div>
+ `).join('');
+ list.innerHTML = html;
+
+ // Update buttons
+ for (let i = 1; i <= 6; i++) {
+  const btn = document.getElementById('rt-btn-' + i);
+  if (btn) {
+   if (selectedRoomTypes.has(i)) {
+    btn.classList.remove('border-surface-200', 'text-ink-600', 'hover:border-brand-400');
+    btn.classList.add('border-brand-500', 'text-brand-600', 'bg-brand-50');
+   } else {
+    btn.classList.add('border-surface-200', 'text-ink-600', 'hover:border-brand-400');
+    btn.classList.remove('border-brand-500', 'text-brand-600', 'bg-brand-50');
+   }
+  }
+ }
+ lucide.createIcons();
+}
+
+function resetHostelForm() {
+ document.getElementById('hf-edit-id').value = '';
+ document.getElementById('hostel-form-title').textContent = 'Add New Hostel';
+ document.getElementById('hostel-submit-btn').textContent = 'Add Hostel';
+ document.getElementById('hostel-form').reset();
+ selectedRoomTypes.clear();
+ updateRoomTypesList();
+ document.getElementById('hf-image-preview').innerHTML = `
+  <i data-lucide="image" class="w-8 h-8 text-ink-300 mx-auto mb-2"></i>
+  <p class="text-sm text-ink-500 font-medium">Click to upload hostel image</p>
+  <p class="text-xs text-ink-300">JPG, PNG supported</p>
+ `;
+ lucide.createIcons();
+}
+
+function previewImage(event) {
+ const file = event.target.files[0];
+ if (!file) return;
+ const reader = new FileReader();
+ reader.onload = (e) => {
+  const preview = document.getElementById('hf-image-preview');
+  preview.innerHTML = `<div class="w-full h-32 rounded-lg bg-cover bg-center border border-brand-300" style="background-image: url('${e.target.result}')"></div><p class="text-xs text-brand-600 mt-2 cursor-pointer" onclick="document.getElementById('hf-image-file').click()">Click to change image</p>`;
+  document.getElementById('hf-image').value = e.target.result;
+ };
+ reader.readAsDataURL(file);
+}
+
+function editHostel(id) {
+ const h = allData.find(d => d.__backendId === id);
+ if (!h) return;
+ showSupplierTab('add');
+ editingHostel = h;
+ document.getElementById('hf-edit-id').value = id;
+ document.getElementById('hostel-form-title').textContent = 'Edit Hostel';
+ document.getElementById('hostel-submit-btn').textContent = 'Update Hostel';
+ document.getElementById('hf-name').value = h.hostel_name || '';
+ document.getElementById('hf-address').value = h.hostel_address || '';
+ document.getElementById('hf-desc').value = h.hostel_description || '';
+ document.getElementById('hf-surroundings').value = h.hostel_surroundings || '';
+ document.getElementById('hf-vaccinated').value = h.hostel_vaccinated ? 'true' : 'false';
+ document.getElementById('hf-food').value = h.hostel_food_rating || '';
+ document.getElementById('hf-clean').value = h.hostel_clean_rating || '';
+ 
+ if (h.hostel_image) {
+  const preview = document.getElementById('hf-image-preview');
+  preview.innerHTML = `<div class="w-full h-32 rounded-lg bg-cover bg-center border border-brand-300" style="background-image: url('${h.hostel_image}')"></div>`;
+  document.getElementById('hf-image').value = h.hostel_image;
+ }
+
+ // Load room types
+ selectedRoomTypes.clear();
+ if (h.room_types) {
+  const roomTypes = JSON.parse(h.room_types);
+  roomTypes.forEach(rt => selectedRoomTypes.add(rt.sharing));
+ }
+ updateRoomTypesList();
+}
+
+async function deleteHostel(id) {
+ const ok = await showConfirm('Delete this hostel? All associated rooms and bookings will remain but the hostel listing will be removed.');
+ if (!ok) return;
+ const h = allData.find(d => d.__backendId === id);
+ if (!h) return;
+ const r = await window.dataSdk.delete(h);
+ if (r.isOk) toast('Hostel deleted.'); else toast('Failed to delete.', 'error');
+}
+
+async function handleHostelSubmit(e) {
+ e.preventDefault();
+ const editId = document.getElementById('hf-edit-id').value;
+
+ // Collect room types with prices
+ const roomTypesArray = [];
+ selectedRoomTypes.forEach(sharing => {
+  const priceInput = document.getElementById('price-' + sharing);
+  const price = priceInput ? parseInt(priceInput.value) || 0 : 0;
+  if (price > 0) {
+   roomTypesArray.push({ sharing, price });
+  }
+ });
+
+ if (roomTypesArray.length === 0) {
+  toast('Please select at least one room type and enter a price.', 'error');
+  return;
+ }
+
+ const data = {
+  type: 'hostel',
+  hostel_name: document.getElementById('hf-name').value.trim(),
+  hostel_address: document.getElementById('hf-address').value.trim(),
+  hostel_description: document.getElementById('hf-desc').value.trim(),
+  hostel_surroundings: document.getElementById('hf-surroundings').value.trim(),
+  hostel_vaccinated: document.getElementById('hf-vaccinated').value === 'true',
+  hostel_food_rating: parseInt(document.getElementById('hf-food').value) || 3,
+  hostel_clean_rating: parseInt(document.getElementById('hf-clean').value) || 3,
+  hostel_image: document.getElementById('hf-image').value.trim() || '',
+  room_types: JSON.stringify(roomTypesArray),
+  hostel_owner_id: currentUser.__backendId,
+  created_at: new Date().toISOString()
+ };
+
+ const btn = document.getElementById('hostel-submit-btn');
+ btn.disabled = true;
+ btn.textContent = editId ? 'Updating...' : 'Adding...';
+
+ let r;
+ if (editId) {
+  const existing = allData.find(d => d.__backendId === editId);
+  if (existing) r = await window.dataSdk.update({ ...existing, ...data });
+ } else {
+  if (allData.length >= 999) { toast('Max records reached.', 'error'); btn.disabled = false; btn.textContent = 'Add Hostel'; return; }
+  r = await window.dataSdk.create(data);
+ }
+
+ btn.disabled = false;
+ btn.textContent = editId ? 'Update Hostel' : 'Add Hostel';
+
+ if (r && r.isOk) {
+  toast(editId ? 'Hostel updated!' : 'Hostel added!');
+  selectedRoomTypes.clear();
+  resetHostelForm();
+  setTimeout(() => showSupplierTab('hostels'), 400);
+ } else {
+  toast('Failed. Please try again.', 'error');
+ }
+}
+
+lucide.createIcons();
+ </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ecb8b30872194dd',t:'MTc3NjI2MjMzMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
